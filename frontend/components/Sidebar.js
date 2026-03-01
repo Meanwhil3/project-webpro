@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { Monitor, LayoutDashboard, Boxes, Download, Upload, LogOut } from 'lucide-react'
 
 export default function Sidebar() {
   const pathname = usePathname()
@@ -42,17 +43,17 @@ export default function Sidebar() {
   }
 
   const menuItems = [
-    { name: 'แดชบอร์ด', href: '/dashboard', icon: '📊' },
-    { name: 'สินค้าทั้งหมด', href: '/products', icon: '📦' },
-    { name: 'นำเข้าสินค้า', href: '/inventory?type=in', icon: '📥' },
-    { name: 'เบิกจ่ายสินค้า', href: '/inventory?type=out', icon: '📤' },
+    { name: 'แดชบอร์ด', href: '/dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
+    { name: 'สินค้าทั้งหมด', href: '/products', icon: <Boxes className="w-5 h-5" /> },
+    { name: 'นำเข้าสินค้า', href: '/stockin', icon: <Download className="w-5 h-5" /> },
+    { name: 'เบิกจ่ายสินค้า', href: '/stockout', icon: <Upload className="w-5 h-5" /> },
   ]
 
   return (
-    <div className="w-64 bg-slate-900 text-slate-300 flex flex-col h-screen sticky top-0 shadow-xl border-r border-slate-800">
+    <div className="w-64 bg-slate-900 text-slate-300 flex flex-col h-screen sticky top-0 shadow-xl">
       <div className="p-6">
         <h2 className="text-white text-xl font-bold flex items-center gap-2">
-          <span className="p-2 bg-blue-600 rounded-lg text-lg shadow-lg shadow-blue-500/20">🖥️</span>
+          <span className="p-2 bg-blue-600 rounded-lg text-lg shadow-lg shadow-blue-500/20"><Monitor className="w-5 h-5" /></span>
           IT Inventory
         </h2>
         <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-bold">ระบบจัดการคลังอุปกรณ์</p>
@@ -90,7 +91,7 @@ export default function Sidebar() {
             className="text-slate-500 hover:text-red-400 transition-all hover:scale-110 p-1"
             title="ออกจากระบบ"
           >
-            <span className="text-xl">🚪</span>
+            <LogOut className="w-5 h-5" />
           </button>
         </div>
       </div>

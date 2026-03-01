@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { Search, Eye, Edit2, Trash2, Plus } from 'lucide-react'
 
 export default function ProductList() {
     const [products, setProducts] = useState([]);
@@ -33,14 +34,14 @@ export default function ProductList() {
                     <p className="text-sm text-slate-500">{products.length} รายการ</p>
                 </div>
                 <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition shadow-sm">
-                    <span className="text-xl">+</span> เพิ่มสินค้า
+                    <Plus className="w-4 h-4" /> เพิ่มสินค้า
                 </button>
             </div>
 
             {/* Filters Section */}
             <div className="bg-white p-4 rounded-xl shadow-sm mb-6 flex gap-4 items-center border border-slate-100">
                 <div className="relative flex-1">
-                    <span className="absolute left-3 top-2.5 text-slate-400">🔍</span>
+                    <span className="absolute left-3 top-2.5 text-slate-400"><Search className="w-4 h-4" /></span>
                     <input 
                         type="text" 
                         placeholder="ค้นหาชื่อ, แบรนด์..." 
@@ -89,9 +90,9 @@ export default function ProductList() {
                                     </span>
                                 </td>
                                 <td className="p-4 text-center space-x-3 text-slate-400">
-                                    <button className="hover:text-blue-600">👁️</button>
-                                    <button className="hover:text-amber-600">✏️</button>
-                                    <button className="hover:text-red-600">🗑️</button>
+                                    <button className="hover:text-blue-600"><Eye className="w-4 h-4 inline" /></button>
+                                    <button className="hover:text-amber-600"><Edit2 className="w-4 h-4 inline" /></button>
+                                    <button className="hover:text-red-600"><Trash2 className="w-4 h-4 inline" /></button>
                                 </td>
                             </tr>
                         ))}

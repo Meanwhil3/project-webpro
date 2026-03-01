@@ -168,6 +168,12 @@ app.post('/api/transactions', async (req, res) => {
     const { product_id, user_id, type, quantity } = req.body;
     try {
         await db.run('BEGIN TRANSACTION');
+
+        const existingProduct = await db.get('SELECT product_id, stock_quantity FROM Products WHERE product_id = ?', [product_id]);
+        if (!existingProduct) {
+            throw new Error('ไม่มีสินค้าในคลัง');
+        }
+
         await db.run(
             `INSERT INTO Inventory_Transactions (product_id, user_id, type, quantity) VALUES (?, ?, ?, ?)`,
             [product_id, user_id, type, quantity]
@@ -208,6 +214,44 @@ app.get('/api/reports/inventory-summary', async (req, res) => {
         FROM Products p
     `);
     res.json(summary);
+});
+
+app.get('/api/notifications/low-stock', async (req, res) => {
+    const items = await db.all(`
+        SELECT product_id, model_name, stock_quantity, min_threshold
+        FROM Products
+        WHERE stock_quantity <= min_threshold
+    `);
+    res.json(items);
+});
+
+app.get('/api/notifications/summary', async (req, res) => {
+    const totalProducts = await db.get('SELECT COUNT(*) as cnt FROM Products');
+    const totalValue = await db.get('SELECT SUM(price * stock_quantity) as val FROM Products');
+    const lowCount = await db.get('SELECT COUNT(*) as cnt FROM Products WHERE stock_quantity <= min_threshold');
+    const today = new Date().toISOString().slice(0, 10);
+    const transactionsToday = await db.get(
+        `SELECT COUNT(*) as cnt FROM Inventory_Transactions WHERE DATE(transaction_date) = ?`,
+        [today]
+    );
+
+    res.json({
+        totalProducts: totalProducts.cnt,
+        totalValue: totalValue.val || 0,
+        lowCount: lowCount.cnt,
+        transactionsToday: transactionsToday.cnt
+    });
+});
+
+app.get('/api/transactions/recent', async (req, res) => {
+    const rows = await db.all(`
+        SELECT it.transaction_id, it.type, it.quantity, it.transaction_date, p.model_name
+        FROM Inventory_Transactions it
+        JOIN Products p ON p.product_id = it.product_id
+        ORDER BY it.transaction_date DESC
+        LIMIT 10
+    `);
+    res.json(rows);
 });
 
 const PORT = 5000;
