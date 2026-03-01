@@ -254,5 +254,36 @@ app.get('/api/transactions/recent', async (req, res) => {
     res.json(rows);
 });
 
+app.get('/api/transactions/monthly-summary', async (req, res) => {
+    const months = Math.max(1, Number(req.query.months) || 1);
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - months);
+    const fromDate = startDate.toISOString().slice(0, 10);
+
+    const rows = await db.all(
+        `
+        SELECT type, COALESCE(SUM(quantity), 0) AS total_quantity
+        FROM Inventory_Transactions
+        WHERE DATE(transaction_date) >= ?
+        GROUP BY type
+        `,
+        [fromDate]
+    );
+
+    const summary = {
+        stockIn: 0,
+        stockOut: 0,
+        fromDate,
+        toDate: new Date().toISOString().slice(0, 10)
+    };
+
+    rows.forEach(row => {
+        if (row.type === 'Stock-In') summary.stockIn = row.total_quantity;
+        if (row.type === 'Stock-Out') summary.stockOut = row.total_quantity;
+    });
+
+    res.json(summary);
+});
+
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
