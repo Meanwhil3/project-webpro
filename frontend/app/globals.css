@@ -1,23 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* กำหนดค่าสีแบบคงที่เพื่อให้ระบบจัดการคลังสินค้าดูสะอาดตาและอ่านง่าย */
+  --background: #f8fafc; /* สีเทาอ่อน (slate-50) */
+  --foreground: #0f172a; /* สีน้ำเงินเข้มมาก (slate-900) */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* ลบหรือคอมเมนต์ส่วน prefers-color-scheme: dark ออก */
+/* เพื่อป้องกันไม่ให้ระบบเปลี่ยนสีตัวอักษรเป็นสีขาวเองอัตโนมัติ */
 
 body {
   background: var(--background);
