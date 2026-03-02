@@ -11,11 +11,14 @@
   --color-foreground: var(--foreground);
 }
 
-/* ลบหรือคอมเมนต์ส่วน prefers-color-scheme: dark ออก */
-/* เพื่อป้องกันไม่ให้ระบบเปลี่ยนสีตัวอักษรเป็นสีขาวเองอัตโนมัติ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground: #ededed;
+  }
+}
 
 body {
-  background: var(--background);
+  background: var(--foreground);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
