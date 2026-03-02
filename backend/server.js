@@ -10,71 +10,6 @@ app.use(express.json());
 
 let db;
 
-// --- ฟังก์ชันสำหรับสร้างข้อมูลจำลอง (Seed Data) ---
-async function seedDatabase(db) {
-  // 1. ตรวจสอบจำนวนสินค้าก่อน ถ้ามีแล้วจะไม่เพิ่มซ้ำ
-  const count = await db.get("SELECT COUNT(*) as total FROM Products");
-
-  if (count.total === 0) {
-    console.log("🌱 Creating Mock Data...");
-
-    // 2. Mock Categories
-    const categories = [
-      "CPU",
-      "GPU",
-      "Storage",
-      "RAM",
-      "Mainboard",
-      "PSU",
-      "Case",
-      "Monitor",
-      "Mouse",
-      "Keyboard",
-      "Networking",
-    ];
-    for (const cat of categories) {
-      await db.run(
-        "INSERT OR IGNORE INTO Categories (category_name) VALUES (?)",
-        [cat],
-      );
-    }
-
-    // 3. Mock Products (ตัวอย่าง 20 รายการแรก - คุณสามารถก๊อปปี้เพิ่มให้ครบ 50 ได้ง่ายๆ)
-    const products = [
-      // [product_code, model_name, brand, cat_id, description, price, stock, min_threshold]
-      ["CPU-001", "Intel Core i9-14900K", "Intel", 1, "24 Cores up to 6.0GHz", 22500, 10, 3],
-      ["CPU-002", "AMD Ryzen 9 7950X", "AMD", 1, "16 Cores 32 Threads", 19900, 5, 2],
-      ["CPU-003", "Intel Core i5-13400F", "Intel", 1, "10 Cores (6P+4E)", 7200, 25, 5],
-      ["CPU-004", "AMD Ryzen 5 7600", "AMD", 1, "6 Cores 12 Threads", 7900, 15, 5],
-      ["GPU-001", "NVIDIA RTX 4090 FE", "NVIDIA", 2, "24GB GDDR6X", 65900, 2, 1],
-      ["GPU-002", "ASUS RTX 4080 Super", "ASUS", 2, "16GB GDDR6X", 42500, 4, 2],
-      ["GPU-003", "MSI RTX 4070 Ti", "MSI", 2, "12GB GDDR6X", 31000, 8, 3],
-      ["STR-001", "Samsung 990 PRO 2TB", "Samsung", 3, "NVMe Gen4 7450MB/s", 6800, 40, 10],
-      ["STR-002", "WD Black SN850X 1TB", "WD", 3, "NVMe Gen4 7300MB/s", 3900, 30, 8],
-      ["RAM-001", "Corsair Vengeance 32GB", "Corsair", 4, "DDR5 6000MHz CL36", 4500, 20, 5],
-      ["MB-001", "ROG Maximus Z790", "ASUS", 5, "Intel Z790 ATX", 24500, 3, 1],
-      ["MON-001", "Odyssey G7 27\"", "Samsung", 8, "2K 240Hz Curved", 18900, 8, 2],
-      ["MS-001", "Logitech G Pro X 2", "Logitech", 9, "Wireless Gaming Mouse", 5400, 20, 5],
-      ["KB-001", "Keychron K2 V2", "Keychron", 10, "Mechanical Keyboard", 3900, 14, 4]
-    ];
-
-    for (const p of products) {
-      await db.run(
-        `INSERT INTO Products (product_code, model_name, brand, category_id, description, price, stock_quantity, min_threshold) 
-                          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        p,
-      );
-    }
-
-    // 4. Mock Users (ถ้ายังไม่มี)
-    await db.run(`INSERT OR IGNORE INTO Users (fullname, email, password, role) 
-              VALUES ('Manager Admin', 'admin@gmail.com', '1234', 'Warehouse Manager'),
-                     ('Staff', 'staff@gmail.com', '1234', 'Warehouse Staff')`);
-
-    console.log("✅ Mock Data created successfully!");
-  }
-}
-
 // --- เชื่อมต่อ Database และสร้าง Tables ---
 (async () => {
   db = await open({
@@ -124,15 +59,10 @@ async function seedDatabase(db) {
 
     `);
 
-  // **เรียกใช้ฟังก์ชัน Seed Data ตรงนี้**
-  await seedDatabase(db);
-
-  console.log("🚀 Database & Seed Ready!");
+  console.log("Database Ready!");
 })();
 
 // --- API ROUTES ---
-
-// backend/server.js - แก้ไขเฉพาะส่วน Route /api/products
 
 app.get("/api/products", async (req, res) => {
   const { search, category } = req.query;
@@ -154,10 +84,6 @@ app.get("/api/products", async (req, res) => {
   const products = await db.all(query, params);
   res.json(products);
 });
-
-// backend/server.js
-
-// backend/server.js
 
 app.delete("/api/products/:id", async (req, res) => {
     const { id } = req.params;
@@ -253,7 +179,6 @@ app.post("/api/transactions", async (req, res) => {
   }
 });
 
-// backend/server.js
 app.get("/api/transactions/recent", async (req, res) => {
   const rows = await db.all(`
         SELECT it.*, p.model_name, p.brand, p.product_code 
@@ -501,17 +426,6 @@ app.get("/api/notifications/summary", async (req, res) => {
     lowCount: lowCount.cnt,
     transactionsToday: transactionsToday.cnt,
   });
-});
-
-app.get("/api/transactions/recent", async (req, res) => {
-  const rows = await db.all(`
-        SELECT it.transaction_id, it.type, it.quantity, it.transaction_date, p.model_name
-        FROM Inventory_Transactions it
-        JOIN Products p ON p.product_id = it.product_id
-        ORDER BY it.transaction_date DESC
-        LIMIT 10
-    `);
-  res.json(rows);
 });
 
 app.get("/api/transactions/monthly-summary", async (req, res) => {

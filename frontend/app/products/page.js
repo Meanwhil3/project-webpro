@@ -43,7 +43,7 @@ export default function ProductList() {
     };
 
     const handleViewDetails = (product) => {
-        alert(`รายละเอียดสินค้า:\nรหัส: ${product.product_code}\nรุ่น: ${product.model_name}\nแบรนด์: ${product.brand}\nราคา: ฿${product.price}\nคำอธิบาย: ${product.description || 'ไม่มีข้อมูล'}`);
+        alert(`รายละเอียดสินค้า:\nรหัส: ${product.product_code}\nรุ่น: ${product.model_name}\nแบรนด์: ${product.brand}\nราคา: ฿${product.price}\nคำอธิบาย: ${product.description || 'ไม่มีข้อมูล'}\nคงเหลือ: ${product.stock_quantity}\nควรมี: ${product.min_threshold}`);
     };
 
     const handleEdit = (productId) => {

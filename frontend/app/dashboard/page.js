@@ -78,7 +78,7 @@ export default function Dashboard() {
         // รวมกันและเรียงตามวันที่ล่าสุด
         const combined = [...mappedTrans, ...mappedNew]
           .sort((a, b) => b.rawDate - a.rawDate)
-          .slice(0, 10)
+          .slice(0, 5)
 
         setRecentMovements(combined)
 
