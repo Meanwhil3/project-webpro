@@ -1,2 +1,3 @@
-start cmd @cmd /k "cd backend && npm i && npm run dev"
-start cmd @cmd /k "cd frontend && npm i && start http://localhost:3000 && npm run dev"
+@echo off
+start cmd /k "cd /d %~dp0backend && npm install && npm run dev"
+start cmd /k "cd /d %~dp0frontend && start http://localhost:3000 && npm install && npm run dev"
