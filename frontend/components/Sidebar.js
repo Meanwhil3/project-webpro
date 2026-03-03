@@ -9,6 +9,7 @@ import {
   PlusCircle, 
   Download, 
   Upload, 
+  History,
   LogOut, 
   AlertCircle, 
   BarChart3 
@@ -71,6 +72,7 @@ export default function Sidebar() {
       items: [
         { name: 'นำเข้าสินค้า', href: '/stockin', icon: <Download className="w-5 h-5" /> },
         { name: 'เบิกจ่ายสินค้า', href: '/stockout', icon: <Upload className="w-5 h-5" /> },
+        { name: 'ประวัติการเคลื่อนไหว', href: '/history', icon: <History className="w-5 h-5" /> },
       ]
     },
     {

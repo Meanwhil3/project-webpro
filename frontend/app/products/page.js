@@ -71,7 +71,7 @@ export default function ProductList() {
         <div className="p-8 bg-gray-50 min-h-screen text-slate-700 font-sans">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">คลังสินค้าทั้งหมด</h1>
+                    <h1 className="text-3xl font-bold text-slate-900">คลังสินค้าทั้งหมด</h1>
                     <p className="text-sm text-slate-500">จัดการรายการอุปกรณ์ไอที ({products.length} รายการ)</p>
                 </div>
                 {/* เพิ่มการเช็คสิทธิ์ปุ่มลงทะเบียน */}
@@ -84,11 +84,11 @@ export default function ProductList() {
 
             <div className="bg-white p-4 rounded-xl shadow-sm mb-6 flex gap-4 items-center border border-slate-100">
                 <div className="relative flex-1">
-                    <span className="absolute left-3 top-2.5 text-slate-400"><Search className="w-4 h-4" /></span>
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input 
                         type="text" 
                         placeholder="ค้นหารหัสสินค้า, ชื่อรุ่น, แบรนด์..." 
-                        className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-900"
+                        className="w-full h-11 rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
@@ -105,7 +105,7 @@ export default function ProductList() {
 
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden text-slate-900">
                 <table className="w-full text-left border-collapse">
-                    <thead className="bg-slate-50 border-b border-slate-100 text-slate-400 text-[11px] uppercase tracking-widest font-bold">
+                    <thead className="bg-slate-50 text-slate-500 text-sm border-b border-slate-200">
                         <tr>
                             <th className="p-4 pl-6 text-blue-600"><div className="flex items-center gap-1"><Hash className="w-3 h-3" /> รหัสสินค้า</div></th>
                             <th className="p-4">แบรนด์</th>

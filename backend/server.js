@@ -52,12 +52,20 @@ let db;
             user_id INTEGER,
             type TEXT CHECK(type IN ('Stock-In', 'Stock-Out')) NOT NULL,
             quantity INTEGER NOT NULL,
+            notes TEXT,
             transaction_date DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (product_id) REFERENCES Products(product_id),
             FOREIGN KEY (user_id) REFERENCES Users(user_id)
         );
 
     `);
+
+  // รองรับฐานข้อมูลเดิมที่ยังไม่มีคอลัมน์ notes
+  const transactionColumns = await db.all(`PRAGMA table_info(Inventory_Transactions)`);
+  const hasNotesColumn = transactionColumns.some((column) => column.name === "notes");
+  if (!hasNotesColumn) {
+    await db.exec(`ALTER TABLE Inventory_Transactions ADD COLUMN notes TEXT`);
+  }
 
   console.log("Database Ready!");
 })();
@@ -136,7 +144,7 @@ app.get("/api/categories", async (req, res) => {
 });
 
 app.post("/api/transactions", async (req, res) => {
-  const { product_id, user_id, type, quantity } = req.body;
+  const { product_id, user_id, type, quantity, note } = req.body;
   try {
     await db.run("BEGIN TRANSACTION");
 
@@ -149,8 +157,8 @@ app.post("/api/transactions", async (req, res) => {
     }
 
     await db.run(
-      `INSERT INTO Inventory_Transactions (product_id, user_id, type, quantity) VALUES (?, ?, ?, ?)`,
-      [product_id, user_id, type, quantity],
+      `INSERT INTO Inventory_Transactions (product_id, user_id, type, quantity, notes) VALUES (?, ?, ?, ?, ?)`,
+      [product_id, user_id, type, quantity, note || null],
     );
 
     if (type === "Stock-In") {
@@ -176,6 +184,56 @@ app.post("/api/transactions", async (req, res) => {
   } catch (error) {
     await db.run("ROLLBACK");
     res.status(400).json({ error: error.message });
+  }
+});
+
+app.get("/api/transactions/history", async (req, res) => {
+  try {
+    const { search, type } = req.query;
+    let query = `
+      SELECT
+        it.transaction_id,
+        it.type,
+        it.quantity,
+        it.notes,
+        it.transaction_date,
+        p.model_name,
+        p.brand,
+        p.product_code,
+        u.fullname AS operator_name
+      FROM Inventory_Transactions it
+      JOIN Products p ON p.product_id = it.product_id
+      LEFT JOIN Users u ON u.user_id = it.user_id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (type === "Stock-In" || type === "Stock-Out") {
+      query += ` AND it.type = ?`;
+      params.push(type);
+    }
+
+    if (search) {
+      query += `
+        AND (
+          p.model_name LIKE ?
+          OR p.brand LIKE ?
+          OR p.product_code LIKE ?
+          OR COALESCE(u.fullname, '') LIKE ?
+          OR COALESCE(it.notes, '') LIKE ?
+        )
+      `;
+      const keyword = `%${search}%`;
+      params.push(keyword, keyword, keyword, keyword, keyword);
+    }
+
+    query += ` ORDER BY it.transaction_date DESC, it.transaction_id DESC`;
+
+    const rows = await db.all(query, params);
+    res.json(rows);
+  } catch (error) {
+    console.error("History Fetch Error:", error);
+    res.status(500).json({ error: "เกิดข้อผิดพลาดในการดึงประวัติการเคลื่อนไหว" });
   }
 });
 
