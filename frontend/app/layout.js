@@ -3,12 +3,10 @@ import React from 'react'
 import { usePathname } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import NavBar from '@/components/NavBar'
-import './globals.css'
+// import './globals.css' // ถ้าคุณลบไฟล์นี้ออก หรือไม่ใช้ npm install แล้ว ให้ Comment ไว้ครับ
 
 export default function RootLayout({ children }) {
   const pathname = usePathname()
-
-  // กำหนดหน้าที่ไม่ต้องแสดง Sidebar (เช่น หน้า Login และ Register)
   const authPages = ['/login', '/register']
   const isAuthPage = authPages.includes(pathname)
   const [showSidebar, setShowSidebar] = React.useState(true)
@@ -17,12 +15,16 @@ export default function RootLayout({ children }) {
 
   return (
     <html lang="th">
+      <head>
+        
+        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+        
+
+      </head>
       <body className="bg-gray-50 text-slate-900">
         <div className="flex min-h-screen">
-          {/* แสดง Sidebar เฉพาะเมื่อไม่ใช่หน้า Auth */}
           {!isAuthPage && showSidebar && <Sidebar />}
 
-          {/* ถ้าเป็นหน้า Auth ให้ใช้เต็มความกว้าง ถ้าไม่ใช่ให้แบ่งพื้นที่กับ Sidebar */}
           <main className={`flex-1 flex flex-col ${isAuthPage ? 'w-full' : 'overflow-y-auto'}`}>
             {!isAuthPage && <NavBar onToggleSidebar={toggleSidebar} />}
             <div className="p-4">{children}</div>
