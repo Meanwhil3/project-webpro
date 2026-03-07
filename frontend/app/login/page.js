@@ -10,6 +10,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
+  const getDefaultPathByRole = (role) => {
+    return role === 'Warehouse Manager' ? '/dashboard' : '/products'
+  }
+
   const handleLogin = async (e) => {
     e.preventDefault()
     setError('')
@@ -26,7 +30,7 @@ export default function LoginPage() {
 
       if (response.ok) {
         localStorage.setItem('user', JSON.stringify(data.user))
-        router.push('/dashboard')
+        router.push(getDefaultPathByRole(data.user?.role))
       } else {
         setError(data.error || 'อีเมลหรือรหัสผ่านไม่ถูกต้อง')
       }
