@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation' // เพิ่ม useRouter สำหรับการ Redirect
 import { 
   BarChart3, 
   DollarSign, 
@@ -11,18 +12,29 @@ import {
 } from 'lucide-react'
 
 export default function ReportsPage() {
+  const router = useRouter()
   const [inventorySummary, setInventorySummary] = useState([])
   const [recentTransactions, setRecentTransactions] = useState([])
   const [monthlySummary, setMonthlySummary] = useState({ stockIn: 0, stockOut: 0 })
   const [loading, setLoading] = useState(true)
+  const [isAuthorized, setIsAuthorized] = useState(false) // State สำหรับตรวจสอบสิทธิ์
 
   useEffect(() => {
+    // --- เริ่มส่วนตรวจสอบ Role ---
+    const user = JSON.parse(localStorage.getItem('user'))
+    if (!user || user.role !== 'Warehouse Manager') {
+      alert('คุณไม่มีสิทธิ์เข้าถึงหน้ารายงาน เฉพาะ Warehouse Manager เท่านั้น')
+      router.replace('/products')
+      return
+    }
+    setIsAuthorized(true)
+    // --- จบส่วนตรวจสอบ Role ---
+
     const fetchData = async () => {
       try {
         // 1. ดึงสรุปมูลค่าสินค้าปัจจุบัน
         const resInv = await fetch('http://localhost:5000/api/reports/inventory-summary')
         const dataInv = await resInv.json()
-        // ตรวจสอบว่าเป็น Array ก่อนทำการบันทึก State
         setInventorySummary(Array.isArray(dataInv) ? dataInv : [])
 
         // 2. ดึงธุรกรรมล่าสุด
@@ -43,7 +55,10 @@ export default function ReportsPage() {
       }
     }
     fetchData()
-  }, [])
+  }, [router])
+
+  // หากไม่มีสิทธิ์ หรือกำลังโหลด ไม่ต้องแสดงผล UI
+  if (!isAuthorized || loading) return <div className="p-8 text-center text-slate-500 font-bold">กำลังตรวจสอบสิทธิ์และโหลดข้อมูล...</div>
 
   // ตรวจสอบความปลอดภัยก่อนใช้ .reduce
   const totalWarehouseValue = Array.isArray(inventorySummary) 
@@ -54,7 +69,7 @@ export default function ReportsPage() {
   const stockInItems = recentTransactions.filter(t => t.type === 'Stock-In').slice(0, 5)
   const stockOutItems = recentTransactions.filter(t => t.type === 'Stock-Out').slice(0, 5)
   
-  // รายการสินค้าที่ลงทะเบียนใหม่ล่าสุด (เรียงตาม product_id จากมากไปน้อย)
+  // รายการสินค้าที่ลงทะเบียนใหม่ล่าสุด
   const newProducts = [...inventorySummary]
     .sort((a, b) => b.product_id - a.product_id)
     .slice(0, 10)
@@ -94,7 +109,7 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {/* แถวบน: แบ่งเป็น 2 กล่อง (นำเข้า / เบิกจ่าย) */}
+      {/* แถวบน: รายการนำเข้า / เบิกจ่าย */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* กล่องนำเข้าล่าสุด */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -167,7 +182,7 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {/* แถวล่างสุด: 1 กล่องใหญ่ (รายการสินค้าลงทะเบียนใหม่) */}
+      {/* รายการสินค้าลงทะเบียนใหม่ */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="p-5 border-b border-slate-100 bg-blue-50/30 flex items-center justify-between">
           <div className="flex items-center gap-3">

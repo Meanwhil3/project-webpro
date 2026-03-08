@@ -7,10 +7,10 @@ import Link from 'next/link'
 export default function AddProductPage() {
   const router = useRouter()
   const [categories, setCategories] = useState([])
-  const [brands, setBrands] = useState([]) // สำหรับเก็บรายการแบรนด์ที่ไม่ซ้ำ
+  const [brands, setBrands] = useState([])
   const [loading, setLoading] = useState(false)
+  const [isAuthorized, setIsAuthorized] = useState(false) // เพิ่มเพื่อเช็คสิทธิ์
 
-  // State สำหรับควบคุม Dropdown แบบกำหนดเอง
   const [showCatDropdown, setShowCatDropdown] = useState(false)
   const [showBrandDropdown, setShowBrandDropdown] = useState(false)
   const catRef = useRef(null)
@@ -21,7 +21,7 @@ export default function AddProductPage() {
     model_name: '',
     brand: '',
     category_id: '',
-    category_name: '', // เพิ่มเพื่อแสดงผลชื่อหมวดหมู่ที่เลือก/พิมพ์
+    category_name: '',
     description: '',
     price: '',
     stock_quantity: '',
@@ -29,7 +29,16 @@ export default function AddProductPage() {
   })
 
   useEffect(() => {
-    // ดึงข้อมูล Categories และ Brands ทั้งหมดที่มีอยู่
+    
+    const user = JSON.parse(localStorage.getItem('user'))
+    if (!user || user.role !== 'Warehouse Manager') {
+      alert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้ เฉพาะ Warehouse Manager เท่านั้น')
+      router.push('/products')
+      return
+    }
+    setIsAuthorized(true)
+    
+
     const fetchData = async () => {
       try {
         const catRes = await fetch('http://localhost:5000/api/categories')
@@ -38,7 +47,6 @@ export default function AddProductPage() {
 
         const prodRes = await fetch('http://localhost:5000/api/products')
         const prodData = await prodRes.json()
-        // ดึงเฉพาะชื่อแบรนด์ที่ไม่ซ้ำกันออกมาทำ Dropdown
         const uniqueBrands = [...new Set(prodData.map(p => p.brand))].filter(b => b)
         setBrands(uniqueBrands)
       } catch (err) {
@@ -47,23 +55,27 @@ export default function AddProductPage() {
     }
     fetchData()
 
-    // ปิด Dropdown เมื่อคลิกข้างนอก
     const handleClickOutside = (e) => {
       if (catRef.current && !catRef.current.contains(e.target)) setShowCatDropdown(false)
       if (brandRef.current && !brandRef.current.contains(e.target)) setShowBrandDropdown(false)
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  }, [router])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
 
     try {
+      // ส่ง user_id แนบไปใน Header เพื่อให้ Backend ตรวจสอบสิทธิ์อีกชั้น
+      const user = JSON.parse(localStorage.getItem('user'))
       const res = await fetch('http://localhost:5000/api/products', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-user-id': user?.id // ส่ง ID ไปตรวจสอบที่ Backend
+        },
         body: JSON.stringify(formData)
       })
       
@@ -81,7 +93,9 @@ export default function AddProductPage() {
     }
   }
 
-  // ตัวกรองข้อมูล
+  // ป้องกันการเห็น UI ชั่วขณะก่อน Redirect
+  if (!isAuthorized) return null
+
   const filteredCategories = categories.filter(c => 
     c.category_name.toLowerCase().includes(formData.category_name.toLowerCase())
   )
@@ -92,7 +106,6 @@ export default function AddProductPage() {
   return (
     <div className="p-8 bg-slate-50 min-h-screen font-sans text-slate-900">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
         <div className="flex justify-between items-end mb-8">
           <div>
             <h1 className="text-3xl font-bold text-slate-800 flex items-center gap-2">
@@ -107,7 +120,6 @@ export default function AddProductPage() {
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-8 space-y-6">
-            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="space-y-2 md:col-span-1">
                 <label className="text-xs font-bold text-blue-600 uppercase tracking-widest flex items-center gap-1">
@@ -136,8 +148,6 @@ export default function AddProductPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              
-              {/* แบรนด์ (พิมพ์ค้นหา / เพิ่มใหม่) */}
               <div className="space-y-2 relative" ref={brandRef}>
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">แบรนด์ *</label>
                 <div className="relative">
@@ -175,7 +185,6 @@ export default function AddProductPage() {
                 )}
               </div>
 
-              {/* หมวดหมู่ (พิมพ์ค้นหา / เลือก) */}
               <div className="space-y-2 relative" ref={catRef}>
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">หมวดหมู่สินค้า *</label>
                 <div className="relative">
@@ -204,9 +213,6 @@ export default function AddProductPage() {
                         {c.category_name}
                       </div>
                     ))}
-                    {formData.category_name && filteredCategories.length === 0 && (
-                      <div className="px-4 py-2 text-slate-400 text-xs italic">ไม่พบหมวดหมู่ที่ตรงกัน</div>
-                    )}
                   </div>
                 )}
               </div>
@@ -266,13 +272,6 @@ export default function AddProductPage() {
             </button>
           </div>
         </form>
-
-        <div className="mt-6 bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3 text-blue-700 shadow-sm">
-           <Info className="w-5 h-5 flex-shrink-0" />
-           <p className="text-xs leading-relaxed">
-             <b>เทคนิคการใช้งาน:</b> คุณสามารถพิมพ์ชื่อแบรนด์ใหม่ได้ทันทีหากไม่มีในรายการ ระบบจะทำการจดจำแบรนด์นั้นเข้าสู่ฐานข้อมูลโดยอัตโนมัติ
-           </p>
-        </div>
       </div>
     </div>
   )

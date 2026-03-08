@@ -1,11 +1,13 @@
-// frontend/app/low-stock/page.js
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation' // เพิ่ม useRouter สำหรับการ Redirect
 import { AlertTriangle, Package, ArrowRight } from 'lucide-react'
 
 export default function LowStockPage() {
+  const router = useRouter()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
+  const [isAuthorized, setIsAuthorized] = useState(false) // State สำหรับตรวจสอบสิทธิ์
 
   const fetchLowStock = async () => {
     try {
@@ -20,8 +22,21 @@ export default function LowStockPage() {
   }
 
   useEffect(() => {
+    // --- เริ่มส่วนตรวจสอบ Role ---
+    const user = JSON.parse(localStorage.getItem('user'))
+    if (!user || user.role !== 'Warehouse Manager') {
+      alert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้ เฉพาะ Warehouse Manager เท่านั้น')
+      router.replace('/products')
+      return
+    }
+    setIsAuthorized(true)
+    // --- จบส่วนตรวจสอบ Role ---
+
     fetchLowStock()
-  }, [])
+  }, [router])
+
+  // หากไม่มีสิทธิ์ หรือกำลังโหลด ไม่ต้องแสดงผล UI
+  if (!isAuthorized || loading) return <div className="p-8 text-center text-slate-500 font-bold">กำลังตรวจสอบสิทธิ์...</div>
 
   return (
     <div className="p-8 bg-slate-50 min-h-screen font-sans text-slate-900">

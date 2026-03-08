@@ -10,7 +10,7 @@ app.use(express.json());
 
 let db;
 
-// --- เชื่อมต่อ Database และสร้าง Tables ---
+
 (async () => {
   db = await open({
     filename: path.join(__dirname, "warehouse.db"),
@@ -32,18 +32,18 @@ let db;
         );
 
         CREATE TABLE IF NOT EXISTS Products (
-        product_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        product_code TEXT UNIQUE,
-        model_name TEXT NOT NULL,
-        brand TEXT NOT NULL,
-        category_id INTEGER,
-        description TEXT,
-        price REAL DEFAULT 0,
-        stock_quantity INTEGER DEFAULT 0,
-        min_threshold INTEGER DEFAULT 5,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (category_id) REFERENCES Categories(category_id)
-    );
+            product_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_code TEXT UNIQUE,
+            model_name TEXT NOT NULL,
+            brand TEXT NOT NULL,
+            category_id INTEGER,
+            description TEXT,
+            price REAL DEFAULT 0,
+            stock_quantity INTEGER DEFAULT 0,
+            min_threshold INTEGER DEFAULT 5,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (category_id) REFERENCES Categories(category_id)
+        );
 
 
         CREATE TABLE IF NOT EXISTS Inventory_Transactions (
@@ -60,30 +60,23 @@ let db;
 
     `);
 
-  // รองรับฐานข้อมูลเดิมที่ยังไม่มีคอลัมน์ notes
-  const transactionColumns = await db.all(`PRAGMA table_info(Inventory_Transactions)`);
-  const hasNotesColumn = transactionColumns.some((column) => column.name === "notes");
-  if (!hasNotesColumn) {
-    await db.exec(`ALTER TABLE Inventory_Transactions ADD COLUMN notes TEXT`);
-  }
-
   console.log("Database Ready!");
 })();
 
-// --- API ROUTES ---
+
 
 app.get("/api/products", async (req, res) => {
   const { search, category } = req.query;
   let query = `SELECT p.*, c.category_name FROM Products p LEFT JOIN Categories c ON p.category_id = c.category_id WHERE 1=1`;
   const params = [];
 
-  // ระบบค้นหาจากชื่อรุ่น หรือ แบรนด์
+
   if (search) {
     query += ` AND (p.product_code LIKE ? OR p.model_name LIKE ? OR p.brand LIKE ?)`;
     params.push(`%${search}%`, `%${search}%`, `%${search}%`);
   }
 
-  // ตัวกรองตามหมวดหมู่
+
   if (category && category !== "all") {
     query += ` AND c.category_name = ?`;
     params.push(category);
@@ -96,14 +89,13 @@ app.get("/api/products", async (req, res) => {
 app.delete("/api/products/:id", async (req, res) => {
     const { id } = req.params;
     try {
-        // เริ่ม Transaction เพื่อความปลอดภัย (ลบหมดหรือห้ามลบเลย)
+       
         await db.run("BEGIN TRANSACTION");
 
-        // 1. ลบประวัติธุรกรรม (นำเข้า/เบิกจ่าย) ทั้งหมดของสินค้านี้ก่อน
-        // หากไม่ลบส่วนนี้ก่อน จะติด Error "Foreign Key Constraint"
+        
         await db.run("DELETE FROM Inventory_Transactions WHERE product_id = ?", [id]);
 
-        // 2. ลบตัวสินค้าออกจากฐานข้อมูล
+        
         const result = await db.run("DELETE FROM Products WHERE product_id = ?", [id]);
 
         if (result.changes === 0) {
@@ -115,7 +107,7 @@ app.delete("/api/products/:id", async (req, res) => {
         res.json({ message: "ลบสินค้าและประวัติทั้งหมดถาวรเรียบร้อยแล้ว" });
 
     } catch (error) {
-        // หากเกิดข้อผิดพลาด ให้ยกเลิกการลบทั้งหมด
+        
         await db.run("ROLLBACK");
         console.error("Delete Error:", error);
         res.status(500).json({ error: "เกิดข้อผิดพลาดทางเทคนิคในการลบข้อมูล" });
@@ -137,7 +129,7 @@ app.get("/api/users/:id", async (req, res) => {
     res.status(500).json({ error: "เกิดข้อผิดพลาดในการดึงข้อมูล" });
   }
 });
-// เพิ่ม Route สำหรับดึงรายการ Categories ทั้งหมดมาทำ Dropdown
+
 app.get("/api/categories", async (req, res) => {
   const categories = await db.all("SELECT * FROM Categories");
   res.json(categories);
@@ -267,7 +259,7 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
-// 1. ดึงรายละเอียดสินค้าตัวเดียว (เพื่อเอาข้อมูลมาใส่ฟอร์ม)
+
 app.get("/api/products-detail/:id", async (req, res) => {
   try {
     const product = await db.get(`
@@ -281,7 +273,7 @@ app.get("/api/products-detail/:id", async (req, res) => {
   }
 });
 
-// 2. API สำหรับการ UPDATE สินค้า
+
 app.put("/api/products/:id", async (req, res) => {
   const { id } = req.params;
   const { product_code, model_name, brand, category_id, category_name, description, price, min_threshold } = req.body;
@@ -290,7 +282,7 @@ app.put("/api/products/:id", async (req, res) => {
     await db.run("BEGIN TRANSACTION");
     let finalCatId = category_id;
 
-    // Logic จัดการหมวดหมู่ใหม่เหมือนหน้า Add
+    
     if (!finalCatId && category_name) {
       const existing = await db.get("SELECT category_id FROM Categories WHERE category_name = ?", [category_name]);
       if (existing) {
@@ -316,18 +308,17 @@ app.put("/api/products/:id", async (req, res) => {
   }
 });
 
-// --- ส่วน Login API ---
+
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
   try {
-    // ค้นหา User ที่มี email และ password ตรงกับที่ส่งมา
+    
     const user = await db.get(
       "SELECT user_id, fullname, email, role FROM Users WHERE email = ? AND password = ?",
       [email, password],
     );
 
     if (user) {
-      // ส่งข้อมูลกลับไปให้ Frontend (ไม่ส่ง password กลับไปเพื่อความปลอดภัย)
       res.json({
         message: "Login successful",
         user: {
@@ -347,7 +338,7 @@ app.post("/api/login", async (req, res) => {
 
 app.get("/api/reports/inventory-summary", async (req, res) => {
   try {
-    // ดึงเฉพาะสินค้าที่ถูกสร้างขึ้นในช่วง 1 เดือนที่ผ่านมา
+    
     const summary = await db.all(`
         SELECT 
             p.product_id, 
@@ -384,15 +375,15 @@ app.get("/api/notifications/low-stock", async (req, res) => {
   }
 });
 
-// backend/server.js - เพิ่มต่อจาก Route อื่นๆ
+
 
 app.post("/api/products", async (req, res) => {
   const {
     product_code,
     model_name,
     brand,
-    category_id,    // ID จากการเลือกใน Dropdown
-    category_name,  // ชื่อหมวดหมู่จากการพิมพ์ค้นหา
+    category_id,
+    category_name,
     description,
     price,
     stock_quantity,
@@ -400,14 +391,13 @@ app.post("/api/products", async (req, res) => {
   } = req.body;
 
   try {
-    await db.run("BEGIN TRANSACTION"); // ใช้ Transaction เพื่อความปลอดภัยของข้อมูล
+    await db.run("BEGIN TRANSACTION");
 
     let finalCategoryId = category_id;
 
-    // --- Logic จัดการหมวดหมู่สินค้า (Category) ---
-    // ถ้าไม่มี category_id ส่งมา แต่มีชื่อหมวดหมู่ (พิมพ์มาใหม่)
+    
     if (!finalCategoryId && category_name) {
-      // 1. ลองค้นหาชื่อหมวดหมู่ที่มีอยู่แล้วก่อน (ป้องกันชื่อซ้ำแต่คนละ ID)
+      
       const existingCat = await db.get(
         "SELECT category_id FROM Categories WHERE category_name = ?",
         [category_name.trim()]
@@ -416,7 +406,7 @@ app.post("/api/products", async (req, res) => {
       if (existingCat) {
         finalCategoryId = existingCat.category_id;
       } else {
-        // 2. ถ้าไม่เจอจริงๆ ให้สร้างหมวดหมู่ใหม่
+        
         const resultCat = await db.run(
           "INSERT INTO Categories (category_name) VALUES (?)",
           [category_name.trim()]
@@ -425,7 +415,7 @@ app.post("/api/products", async (req, res) => {
       }
     }
 
-    // --- Logic บันทึกข้อมูลสินค้า ---
+    
     const result = await db.run(
       `INSERT INTO Products (
         product_code, 

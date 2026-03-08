@@ -120,7 +120,7 @@ export default function LoginPage() {
         </form>
 
         <p className="text-center text-white/60 text-xs mt-6">
-          © 2026 Warehouse Management System. All rights reserved.
+          © 2026 Warehouse Management System. 65070183&65070248
         </p>
       </div>
     </div>
