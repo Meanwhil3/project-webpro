@@ -23,7 +23,7 @@ export default function ReportsPage() {
     // --- เริ่มส่วนตรวจสอบ Role ---
     const user = JSON.parse(localStorage.getItem('user'))
     if (!user || user.role !== 'Warehouse Manager') {
-      alert('คุณไม่มีสิทธิ์เข้าถึงหน้ารายงาน เฉพาะ Warehouse Manager เท่านั้น')
+      alert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้ เฉพาะ Warehouse Manager เท่านั้น')
       router.replace('/products')
       return
     }

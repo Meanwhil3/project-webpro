@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Package, DollarSign, AlertTriangle, ArrowRightLeft, PlusSquare, History } from 'lucide-react'
 
 function StatCard({ title, value, icon }) {
@@ -15,8 +16,10 @@ function StatCard({ title, value, icon }) {
 }
 
 export default function Dashboard() {
+  const router = useRouter()
   const [lowStock, setLowStock] = useState([])
   const [user, setUser] = useState(null)
+  const [isAuthorized, setIsAuthorized] = useState(false)
   const [summary, setSummary] = useState({
     totalProducts: 0,
     totalValue: 0,
@@ -31,9 +34,17 @@ export default function Dashboard() {
   useEffect(() => {
     try {
       const parsed = JSON.parse(localStorage.getItem('user'))
+      if (!parsed || parsed.role !== 'Warehouse Manager') {
+        alert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้ เฉพาะ Warehouse Manager เท่านั้น')
+        router.replace('/products')
+        return
+      }
       setUser(parsed)
+      setIsAuthorized(true)
     } catch {
       setUser(null)
+      router.replace('/login')
+      return
     }
 
     fetch('http://localhost:5000/api/notifications/low-stock')
@@ -116,7 +127,11 @@ export default function Dashboard() {
         })).filter(item => item.value > 0)
         setCategoryBreakdown(entries)
       })
-  }, [])
+  }, [router])
+
+  if (!isAuthorized) {
+    return <div className="p-8 text-center text-slate-500 font-bold">กำลังตรวจสอบสิทธิ์...</div>
+  }
 
   // คำนวณค่าสูงสุดเพื่อทำ Scale ของกราฟ
   const maxMovement = Math.max(monthlyMovement.stockIn, monthlyMovement.stockOut, monthlyMovement.newItems, 1)

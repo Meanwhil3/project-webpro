@@ -35,7 +35,7 @@ export default function EditProductPage({ params }) {
     // --- 1. ตรวจสอบสิทธิ์ (Warehouse Manager เท่านั้น) ---
     const user = JSON.parse(localStorage.getItem('user'));
     if (!user || user.role !== 'Warehouse Manager') {
-        alert('สิทธิ์ของคุณไม่เพียงพอสำหรับการเข้าถึงหน้านี้');
+        alert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้ เฉพาะ Warehouse Manager เท่านั้น');
         router.replace('/products');
         return;
     }

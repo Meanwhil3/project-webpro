@@ -70,8 +70,10 @@ export default function Sidebar() {
     {
       title: "จัดการสต็อก",
       items: [
-        { name: 'นำเข้าสินค้า', href: '/stockin', icon: <Download className="w-5 h-5" /> },
-        { name: 'เบิกจ่ายสินค้า', href: '/stockout', icon: <Upload className="w-5 h-5" /> },
+        ...(!isManager ? [
+          { name: 'นำเข้าสินค้า', href: '/stockin', icon: <Download className="w-5 h-5" /> },
+          { name: 'เบิกจ่ายสินค้า', href: '/stockout', icon: <Upload className="w-5 h-5" /> },
+        ] : []),
         { name: 'ประวัติการเคลื่อนไหว', href: '/history', icon: <History className="w-5 h-5" /> },
       ]
     },
