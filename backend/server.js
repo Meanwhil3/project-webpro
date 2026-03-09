@@ -12,10 +12,11 @@ let db;
 
 
 (async () => {
-  db = await open({
-    filename: path.join(__dirname, "warehouse.db"),
-    driver: sqlite3.Database,
-  });
+  try {
+    db = await open({
+      filename: path.join(__dirname, "warehouse.db"),
+      driver: sqlite3.Database,
+    });
 
   await db.exec(`
         CREATE TABLE IF NOT EXISTS Categories (
@@ -61,6 +62,15 @@ let db;
     `);
 
   console.log("Database Ready!");
+
+    const PORT = 5000;
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+
+  } catch (err) {
+    console.error("Database error:", err);
+  }
 })();
 
 
@@ -506,8 +516,3 @@ app.get("/api/transactions/monthly-summary", async (req, res) => {
 
   res.json(summary);
 });
-
-const PORT = 5000;
-app.listen(PORT, () =>
-  console.log(`Server running on http://localhost:${PORT}`),
-);
